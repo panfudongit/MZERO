@@ -100,6 +100,23 @@ static inline uint32_t mapResolution(uint32_t value, uint32_t from, uint32_t to)
   return value << (to-from);
 }
 
+static inline uint32_t mapPwmDuty(uint32_t value, uint32_t max, uint32_t bit)
+{
+    if(value <= 0)
+        return 0;
+    if(value >= max)
+    {
+        if(bit == 16)
+            return 0xffff;
+        if(bit == 32)
+            return 0xffffffff;
+    }
+    if(bit == 16)
+        value = (0xffff / max) * value;
+    if(bit == 32)
+        value = (0xffffffff / max) * value;
+    return value;
+}
 /*
  * Internal Reference is at 1.0v
  * External Reference should be between 1v and VDDANA-0.6v=2.7v
@@ -228,7 +245,7 @@ void analogWrite(uint32_t pin, uint32_t value)
 
   if ((attr & PIN_ATTR_PWM) == PIN_ATTR_PWM)
   {
-    value = mapResolution(value, _writeResolution, 16);
+    value = mapPwmDuty(value, 250, 16);
 
     uint32_t tcNum = GetTCNumber(pinDesc.ulPWMChannel);
     uint8_t tcChannel = GetTCChannelNumber(pinDesc.ulPWMChannel);
