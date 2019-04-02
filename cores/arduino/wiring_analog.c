@@ -26,7 +26,7 @@ extern "C" {
 static int _readResolution = 10;
 static int _ADCResolution = 10;
 static int _writeResolution = 8;
-
+static uint8_t pwm_div = PWM_PRESCALER_PRESCALER_DIV_0;
 // Wait for synchronization of registers between the clock domains
 static __inline__ void syncADC() __attribute__((always_inline, unused));
 static void syncADC() {
@@ -67,6 +67,21 @@ void analogReadResolution(int res)
     _ADCResolution = 8;
   }
   syncADC();
+}
+
+void analogWriteDiv(int res)
+{
+	if(res < PWM_PRESCALER_PRESCALER_DIV_0)
+	{
+		pwm_div = (uint8_t)PWM_PRESCALER_PRESCALER_DIV_0;
+		return;
+	}
+	if(res > PWM_PRESCALER_PRESCALER_DIV_7)
+	{
+		pwm_div = (uint8_t)PWM_PRESCALER_PRESCALER_DIV_7;
+		return;
+	}
+	pwm_div = (uint8_t)res;
 }
 
 void analogWriteResolution(int res)
@@ -258,7 +273,7 @@ void analogWrite(uint32_t pin, uint32_t value)
         TCx->COUNT16.CTRLA.bit.ENABLE = 0;
         syncTC_16(TCx);
         // Set Timer counter Mode to 16 bits, normal PWM
-        TCx->COUNT16.CTRLA.reg |= TC_CTRLA_MODE_COUNT16 | TC_CTRLA_WAVEGEN_NPWM;
+        TCx->COUNT16.CTRLA.reg |= TC_CTRLA_MODE_COUNT16 | TC_CTRLA_WAVEGEN_NPWM | (pwm_div << 8);
         syncTC_16(TCx);
         // Set the initial value
         TCx->COUNT16.CC[tcChannel].reg = (uint32_t) value;
@@ -282,6 +297,7 @@ void analogWrite(uint32_t pin, uint32_t value)
         TCCx->PER.reg = 0xFFFF;
         syncTCC(TCCx);
         // Enable TCCx
+        TCCx->CTRLA.bit.PRESCALER = pwm_div;
         TCCx->CTRLA.bit.ENABLE = 1;
         syncTCC(TCCx);
       }
