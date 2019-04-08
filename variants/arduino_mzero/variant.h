@@ -41,6 +41,7 @@
 #ifdef __cplusplus
 #include "SERCOM.h"
 #include "Uart.h"
+#include "Time.h"
 #endif // __cplusplus
 
 #ifdef __cplusplus
@@ -189,6 +190,7 @@ extern Uart Serial;
 extern Uart Serial1;
 extern Uart Serial2;
 
+extern Time Timer;
 
 #endif
 

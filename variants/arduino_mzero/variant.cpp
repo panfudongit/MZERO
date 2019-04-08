@@ -207,6 +207,8 @@ SERCOM sercom5( SERCOM5 ) ;
 Uart Serial2( &sercom1, PIN_SERIAL2_RX, PIN_SERIAL2_TX, PAD_SERIAL2_RX, PAD_SERIAL2_TX ) ;
 Uart Serial1( &sercom0, PIN_SERIAL1_RX, PIN_SERIAL1_TX, PAD_SERIAL1_RX, PAD_SERIAL1_TX ) ;
 Uart Serial( &sercom5, PIN_SERIAL_RX, PIN_SERIAL_TX, PAD_SERIAL_RX, PAD_SERIAL_TX ) ;
+Time Timer( TIME_16B_COUNT );
+
 void SERCOM0_Handler()
 {
   Serial1.IrqHandler();
@@ -221,3 +223,9 @@ void SERCOM5_Handler()
 {
   Serial.IrqHandler();
 }
+
+void RTC_Handler(void)
+{
+  Timer.IrqHandler();
+}
+
