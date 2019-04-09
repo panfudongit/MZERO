@@ -75,6 +75,38 @@ unsigned short EEPROM::read(unsigned int addr)
   return NVM_MEMORY[user_addr / 2];
 }
 
+int EEPROM::readbuf(unsigned int addr, unsigned char *buf, int length)
+{
+  int user_addr = addr + BOOTLOADER_SIZE + APP_SIZE;
+  int i = 0;
+
+  if (user_addr & ((8 << NVMCTRL->PARAM.bit.PSZ) - 1))
+    return FALSE;
+
+  if(length > PAGE_SIZE)
+    return FALSE;
+
+  if (!nvm_is_ready())
+    return FALSE;
+
+  NVMCTRL->STATUS.reg = NVMCTRL_STATUS_MASK;
+
+  unsigned int nvm_address = user_addr / 2;
+  unsigned short data;
+
+  for(i = 0; i < length; i += 2)
+  {
+    data = NVM_MEMORY[nvm_address++];
+
+    buf[i] = (data & 0xFF);
+
+    if (i < (length - 1)) 
+      buf[i + 1] = (data >> 8);
+  }
+  return i;
+
+}
+
 //write 16b
 int EEPROM::write(unsigned int addr, unsigned short data)
 {
@@ -89,12 +121,53 @@ int EEPROM::write(unsigned int addr, unsigned short data)
   
 }
 
+int EEPROM::writebuf(unsigned int addr, unsigned char *buf, int length)
+{
+  int user_addr = addr + BOOTLOADER_SIZE + APP_SIZE;
+  int i = 0;
+
+  if(length > PAGE_SIZE)
+    return FALSE;
+  if (user_addr & ((8 << NVMCTRL->PARAM.bit.PSZ) - 1))
+    return FALSE;
+
+  nvm_erase(addr);
+
+  if (!(NVMCTRL->INTFLAG.reg & NVMCTRL_INTFLAG_READY))
+    return FALSE;
+  if (!nvm_is_ready())
+    return FALSE;
+
+  NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMD_PBC | NVMCTRL_CTRLA_CMDEX_KEY;
+  nvm_sync();
+
+  NVMCTRL->STATUS.reg = NVMCTRL_STATUS_MASK;
+
+  unsigned int nvm_address = user_addr / 2;
+  unsigned short data;
+
+  for(i = 0; i < length; i += 2)
+  {
+    data = buf[i] & 0x00ff;
+    if(i < (length - 1))
+      data |= (buf[i + 1] << 8);
+
+    NVM_MEMORY[nvm_address++] = data;
+  }
+
+  if(length < PAGE_SIZE)
+    nvm_execute_command(NVMCTRL_CTRLA_CMD_WP, user_addr, 0);
+
+  return count;
+}
+
 int EEPROM::loopwrite(unsigned int addr, unsigned short data)
 {
-	nvm_erase(addr);
-
   if (addr & ((8 << NVMCTRL->PARAM.bit.PSZ) - 1))
     return FALSE;
+
+  nvm_erase(addr);
+
   if (!(NVMCTRL->INTFLAG.reg & NVMCTRL_INTFLAG_READY))
     return FALSE;
   if (!nvm_is_ready())

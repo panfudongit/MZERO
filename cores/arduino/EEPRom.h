@@ -21,6 +21,8 @@ class EEPROM
     EEPROM(unsigned int mode);
     unsigned short read(unsigned int addr);
     int write(unsigned int addr, unsigned short data);
+    int readbuf(unsigned int addr, unsigned char *buf, int length);
+    int writebuf(unsigned int addr, unsigned char *buf, int length);
     int loopwrite(unsigned int addr, unsigned short data);
     int nvm_erase(unsigned int addr);
     int nvm_execute_command(const unsigned int command, const unsigned int address, const unsigned int parameter);
