@@ -39,15 +39,17 @@ EEPROM::EEPROM(unsigned int mode)
 // 32b erase
 int EEPROM::nvm_erase(unsigned int addr)
 {
-  if(addr > (PAGE_SIZE * NUMBER_OF_PAGES))
+  int user_addr = addr + BOOTLOADER_SIZE + APP_SIZE;
+
+  if(user_addr > (PAGE_SIZE * NUMBER_OF_PAGES))
     return FALSE;
-  if (addr & (((8 << NVMCTRL->PARAM.bit.PSZ) * NVMCTRL_ROW_PAGES) - 1))
+  if (user_addr & (((8 << NVMCTRL->PARAM.bit.PSZ) * NVMCTRL_ROW_PAGES) - 1))
     return FALSE;
   if (!(NVMCTRL->INTFLAG.reg & NVMCTRL_INTFLAG_READY))
     return FALSE;
 
   NVMCTRL->STATUS.reg = NVMCTRL_STATUS_MASK;
-  NVMCTRL->ADDR.reg  = (uintptr_t)&NVM_MEMORY[addr / 4];
+  NVMCTRL->ADDR.reg  = (uintptr_t)&NVM_MEMORY[user_addr / 4];
   NVMCTRL->CTRLA.reg = NVMCTRL_CTRLA_CMD_ER | NVMCTRL_CTRLA_CMDEX_KEY;
 
   nvm_sync();
@@ -61,7 +63,8 @@ int EEPROM::nvm_erase(unsigned int addr)
 // read 16b
 unsigned short EEPROM::read(unsigned int addr)
 {
-  if (addr & ((8 << NVMCTRL->PARAM.bit.PSZ) - 1))
+  int user_addr = addr + BOOTLOADER_SIZE + APP_SIZE;
+  if (user_addr & ((8 << NVMCTRL->PARAM.bit.PSZ) - 1))
     return FALSE;
 
   if (!nvm_is_ready())
@@ -69,19 +72,20 @@ unsigned short EEPROM::read(unsigned int addr)
 
   NVMCTRL->STATUS.reg = NVMCTRL_STATUS_MASK;
 
-  return NVM_MEMORY[addr / 2];
+  return NVM_MEMORY[user_addr / 2];
 }
 
 //write 16b
 int EEPROM::write(unsigned int addr, unsigned short data)
 {
+  int user_addr = addr + BOOTLOADER_SIZE + APP_SIZE;
   int i = 0;
 
   do
   {
 	i = i + 1; 
   }
-  while (!loopwrite(addr, data) & (i < W_LOOP_COUNT));
+  while (!loopwrite(user_addr, data) & (i < W_LOOP_COUNT));
   
 }
 
