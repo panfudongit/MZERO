@@ -42,6 +42,7 @@
 #include "SERCOM.h"
 #include "Uart.h"
 #include "Time.h"
+#include "EEPRom.h"
 #endif // __cplusplus
 
 #ifdef __cplusplus
@@ -192,6 +193,7 @@ extern Uart Serial2;
 
 extern Time Timer;
 
+extern EEPROM EPROM;
 #endif
 
 // These serial port names are intended to allow libraries and architecture-neutral
